@@ -1,0 +1,17 @@
+{
+    "require-dev": {
+        "guzzlehttp/guzzle": "~6.0",
+        "swiftmailer/swiftmailer": "@stable",
+        "phpunit/phpunit": "^5.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "TDD\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TDD\\Test\\": "tests/"
+        }
+    }
+}
