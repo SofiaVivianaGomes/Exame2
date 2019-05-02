@@ -1,12 +1,11 @@
 <?php
 
 namespace App\Controllers; //local onde está inserido
-use Vendor\View;
 use App\User;
 
 class UserController {
     
-    private $errors, $name, $username, $password;
+    private $errors, $name, $username, $password, $valid;
 
     /*
      * Método: validate() 
@@ -16,35 +15,50 @@ class UserController {
      * Objetivo: Validar os campos name (se for registo), username, password
      *
     */
-    public function validate($data, $registered) 
+    public function validate($data, $registered, $to_alter) 
     {
         $this->errors = []; 
 
-        if (array_key_exists('name', $data)) {
-            // Registo
-            $this->name = $data['name'] ?? '';
-            
-            if (is_blank($this->name)) {
-                $this->errors['name'] = 'Invalid name.';
+        if($to_alter) {
+
+            if (is_blank($data['new_password'])) {
+                $this->errors['new_password'] = 'Invalid new password.';
             }
-        } 
 
-        $this->username = $data['username'] ?? '';
-        $this->password = $data['password'] ?? '';
+        } else {
 
-        if(is_blank($this->username)) {
-            $this->errors['username'] = 'Invalid username.';
-        }
+            if (array_key_exists('name', $data)) {
+                // Registo
+                $this->name = $data['name'] ?? '';
+                
+                if (is_blank($this->name)) {
+                    $this->errors['name'] = 'Invalid name.';
+                }
+            } 
+    
+            $this->username = $data['username'] ?? '';
+            //$this->password = $data['password'] ?? '';
+    
+            if(is_blank($this->username)) {
+                $this->errors['username'] = 'Invalid username.';
+            }
+    
+            if(!$registered && !$this->has_unique_username($this->username)) {
+                $this->errors['username'] = 'Invalid username.';
+            }
+    
+            //if(is_blank($this->password)) {
+            //    $this->errors['password'] = 'Invalid password.';
+            //}
 
-        if(!$registered && !$this->has_unique_username($this->username)) {
-            $this->errors['username'] = 'Invalid username.';
-        }
-
-        if(is_blank($this->password)) {
-            $this->errors['password'] = 'Invalid password.';
         }
         
-        return $this->errors;
+        //return $errors;
+        if (empty($this->errors)) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /*
@@ -72,15 +86,16 @@ class UserController {
             //var_dump($data);
             
             // Validar a data para o login
-            $validated = $this->validate($data, true); //está registado
+            $validated = $this->validate($data, true, false); //está registado
 
-            if (!empty($this->errors) && $validated == false) {
+            if (!empty($this->errors) || $validated == false) {
                 //View::render('login', $this);
             } else {
                 
                 if($this->log_user()) {
                     LogsController::register_log('Logged in.');
-                    header("Location: /indexes");
+                    //header("Location: /indexes");
+                    return password_hash($this->password, PASSWORD_DEFAULT);
                 } else {
                     $this->errors[] = "Invalid login.";
                     //View::render('login', $this);
@@ -114,9 +129,9 @@ class UserController {
         } else { 
 
             // Validate data to register
-            $validated = $this->validate($data, false); //isn't registered yet
+            $validated = $this->validate($data, false, false); //isn't registered yet
 
-            if (!empty($this->errors) && $validated == false) {
+            if (!empty($this->errors) || $validated == false) {
                 //View::render('register', $this);
             } else { //preencheu tudo
 
@@ -126,18 +141,19 @@ class UserController {
                     $this->errors[] = "Invalid registration.";
                     //View::render('register', $this);
                 } else {
-                    
-                    $authorized = AuthController::verify($this->username, $hash);
 
+                    $authorized = EmailListController::verify($this->username); // verificar se está na lista
+            
                     if($authorized) {
 
-                        // If registered, go to indexes page
-                        if ($this->register_user()) {
+                        $random = randomPassword();
 
-                            if($this->log_user()) {                        
-                                LogsController::register_log('Registered and logged in.');
-                                header("Location: /indexes");
-                            }
+                        // Se registado, fazer logo o login e ir para a página de indexes
+                        if ($this->register_user($random)) {
+
+                            LogsController::register_log('Registered');
+
+                           return SwiftMailerController::sendMail($this->username, $random);
                             
                         } else {
                             $this->errors[] = "Invalid registration.";
@@ -155,6 +171,49 @@ class UserController {
             }
 
         }
+        return false;
+    }
+
+    /*
+     * Método: alter() 
+     * Pârametros: $data ($_POST / NULL)
+     * Retorno: 200 OK / false (depende se fez um header location)
+     * 
+     * Objetivo: Validar os campos name (se for registo), username, password
+     *
+    */
+    public function alter($data=NULL, $hash=NULL)
+    {        
+        if ($hash !== NULL) {
+
+            if ($data === NULL) { // Não foram mandados dados
+
+                //$this->show_login();            
+
+            } else {
+
+                //var_dump($data);
+                
+                // Validar a data para o login
+                $validated = $this->validate($data, true, true); 
+
+                if ($validated) {
+                    //View::render('login', $this);
+                } else {
+                    
+                    if($this->alter_user()) {
+                        LogsController::register_log('Altered password.');
+                        header("Location: /indexes");
+                    } else {
+                        $this->errors[] = "Invalid new password.";
+                        //View::render('login', $this);
+                    }
+
+                }
+            }
+
+        }
+        return false;
     }
 
     public function log_user() : bool //strict type
@@ -163,21 +222,26 @@ class UserController {
 
         if ($logged) {
             // prevent session fixation attacks
-            session_regenerate_id(); //regenerate the session everytime there's a login 
-            $_SESSION['username'] = $this->username; // save session variable
+            session_regenerate_id(); // regenerar a sessão sempre que há um login
+            $_SESSION['username'] = $this->username; //guardar sessão do user
+
+            // Após login, criar o token
+            $csrf = create_csrf_token();
+            $_SESSION['csrf_token'] = $csrf;
         }
 
         return $logged;   
     }
 
-    public function register_user() 
+    public function register_user($random) 
     {
         $user = new User;
         $user->name = $this->name;
         $user->username = $this->username;
-        $user->password = $this->password;
+        $user->password = password_hash($random, PASSWORD_DEFAULT); //bcrypt
         $user->register = date("Y-m-d H:i:s", time());
         $user->login = $user->register;
+        $user->valid = true;
 
         return $user->save();
     }
@@ -223,6 +287,28 @@ class UserController {
 
     public static function find_by_username($username) {
         return User::find_by_username($username);
+    }
+
+    public function alter_user($new_password) : bool //strict type
+    { 
+        $altered = User::alter_user($this->username, $new_password);
+
+        if ($altered) {
+            $this->password = $new_password;
+        }
+
+        return $altered;   
+    }
+
+    public function randomPassword() {
+        $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+        $pass = array(); //remember to declare $pass as an array
+        $alphaLength = strlen($alphabet) - 1; //put the length -1 in cache
+        for ($i = 0; $i < 5; $i++) {
+            $n = rand(0, $alphaLength);
+            $pass[] = $alphabet[$n];
+        }
+        return implode($pass); //turn the array into a string
     }
 
     /*

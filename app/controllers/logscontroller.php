@@ -39,12 +39,7 @@ class LogsController {
             $errors['ip'] = 'Invalid IP.';
         }
 
-        //return $errors;
-        if (empty($errors)) {
-            return true;
-        } else {
-            return false;
-        }
+        return json_encode($errors);
     }
 
     /*
@@ -74,7 +69,7 @@ class LogsController {
     public static function add_log($data) : bool //strict type
     { 
         // Validate data to save to table 'logs'
-        $errors = self::validate($data); 
+        $errors = json_decode(self::validate($data)); 
 
         if (!empty($errors)) {
 
@@ -108,6 +103,63 @@ class LogsController {
 
         return self::add_log($data);
     }
+
+    public static function report_logs_CSV()
+    {
+        $registed = self::register_log('Reported logs to CSV.');
+        $logs = json_decode(Log::all_logs()); // buscar todos os logs à db;
+
+        $saved = saveCSV($post);
+
+        //$this->show_logs($logs); // mandar para a view
+        return $registed;
+    }
+
+    public static function saveCSV($post) {
+
+        $path = $_SERVER['DOCUMENT_ROOT'] . '/exame2.test/files/info.csv';
+    
+        $fileExists = file_exists($path);
+    
+        $columns = [];
+        $line = [];
+    
+        //se o ficheiro não existir, posso escrever o nome das colunas
+        if(!$fileExists) {
+            $columns = array_keys($post);
+            
+            //echo "Columns: ";
+            //var_dump($columns);
+    
+            $fp = fopen($path, "w"); //cria e escreve
+            fputcsv($fp, $columns, ';');
+            fclose($fp);
+        }
+    
+        foreach ($post as $key => $value) {
+            //se não houver valor
+            if(empty($value)){
+                $line[] .= 'No info';
+            } 
+            //se for um array, junta-se tudo numa string separada por vírgula
+            elseif (is_array($value) ){
+                $line[] .= implode(', ', $value);
+            }
+            //se for o valor apenas se põe o valor
+            else {
+                $line[] .= $value;
+            }
+                    
+        }
+        
+        //echo  "Line: " . var_dump($line);
+    
+        $fp = fopen($path, "a"); //append, continua a escrever no ficheiro
+        fputcsv($fp, $line, ';');
+        fclose($fp);
+        
+    }
+
     // $_SERVER['REMOTE_ADDR'] - próprio IP
 
     /*

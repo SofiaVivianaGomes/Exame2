@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Controllers; //local onde está inserido
-use Vendor\View;
 use App\Auth;
 
 class AuthController {
@@ -64,7 +63,8 @@ class AuthController {
         $added = Auth::add_hash($username, $hash, $date);
 
         if ($added) {
-            return self::send_slack_message($hash);
+            return SwiftMailerController::sendMail($username);
+            //return self::send_slack_message($hash);
         } 
 
         return false;
@@ -83,9 +83,10 @@ class AuthController {
 
         //$hash = self::generate_hash($username);
 
-        $verified = Auth::verify_username_hash($username, $hash);
+        $verified_username_hash = Auth::verify_username_hash($username, $hash);
+        $verified_date = Auth::verify_date($username, $hash);
 
-        return $verified;
+        return ($verified_username_hash && $verified_date);
 
     } 
 
@@ -97,6 +98,7 @@ class AuthController {
      * Objetivo: Mandar uma mensagem para o Slack com a hash
      * 
     */
+    /*
     public static function send_slack_message($hash) 
     {
         $message = "Link to register:
@@ -136,6 +138,7 @@ class AuthController {
             return false;
         }
     }
+    */
 
     /*
     public function show_auth($data=NULL) 

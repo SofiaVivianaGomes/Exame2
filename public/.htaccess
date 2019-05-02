@@ -3,16 +3,31 @@
 # RewriteRule  ^/?X$ page.php?ct=controller&mt=method
 # [QSA] deixa passar o que estava no URL 
 
-# Redirect to a page inside /public with 404.php
-ErrorDocument 404 /404.php
+# No terminal:
+# sudo nano /etc/apache2/sites-available/exame2.test.conf
+#
+# <Directory "/var/www/exame2.test/public/">
+#               AllowOverride All
+#                Options Indexes FollowSymLinks
+#   Require all granted
+#RewriteEngine On
+#       </Directory>
+# 
+# E mudar a DocumentRoot para /var/www/exame2.test/public/
 
 RewriteEngine on
+
+# Redirect to a page inside /public with 404.php
+ErrorDocument 404 /404.php
 
 # Route para login
 RewriteRule  ^/?login$ index.php?ct=usercontroller&mt=login
 
 # Route para register (precisa de passar a hash no URL)
 RewriteRule  ^/?register$ index.php?ct=usercontroller&mt=register [QSA]
+
+# Route para alter password (precisa de passar a hash no URL)
+RewriteRule  ^/?alter$ index.php?ct=usercontroller&mt=alter [QSA]
 
 # Route para indexes
 RewriteRule  ^/?indexes$ index.php?ct=indexescontroller&mt=indexes
@@ -22,9 +37,6 @@ RewriteRule  ^/?logs$ index.php?ct=logscontroller&mt=logs
 
 # Route para auth
 RewriteRule  ^/?auth$ index.php?ct=authcontroller&mt=auth
-
-# Route para zip
-RewriteRule  ^/?zip$ index.php?ct=zipcontroller&mt=zip
 
 # Route para logout
 RewriteRule  ^/?logout$ index.php?ct=usercontroller&mt=logout

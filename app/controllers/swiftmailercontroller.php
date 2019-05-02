@@ -8,14 +8,20 @@ class SwiftMailerController {
     private static $password='academiaphp2019';
     private static $smtp_server='smtp.gmail.com';
 
-    public static function sendMail($dest, $title, $body) {
+    public static function sendMail($dest, $random_password) {
 
         try {
             // Preparar mensagem email:
             $message = new Swift_Message();
 
-            $from =  [self::$username => 'Sofia'];
+            $from =  [self::$username];
             $destination = [$dest];
+            $title = 'Confirm Credentials';
+            $body = 'Your information is:
+                    username: ' . $dest . '
+                    password: ' . $random_password . '
+                    PLEASE NOTE: You only have 5 minutes to confirm!
+                    If you have not registered, please ignore this email.';
 
             $message->setFrom($from);
             $message->setTo($destination);
@@ -35,8 +41,10 @@ class SwiftMailerController {
             
             if ($result) {
                 echo "Number of emails sent: $result";
+                return true;
             } else {
                 echo "Couldn't send email";
+                return false;
             }
         } catch (Exception $e) {
             echo $e->getMessage();

@@ -14,26 +14,42 @@ class UserTest extends TestCase {
 		unset($this->UserController);
 	}
 
-	public function testIndexes($input=NULL, $expected, $msg) {
+	public function testValidate($data=NULL, $registered=NULL, $to_alter=NULL, $expected, $msg) {
 		$this->assertSame(
 			$expected,
-			$this->IndexesController->indexes($input),
+			$this->UserController->validate($data, $registered, $to_alter),
 			$msg
 		);
 	}
 
-	public function testGetServiceData($expected, $msg) {
+	public function testLogin($data=NULL, $expected, $msg) {
 		$this->assertSame(
 			$expected,
-			$this->IndexesController->getServiceData(),
+			$this->UserController->login($data),
 			$msg
 		);
 	}
 
-	public function testSaveData($input, $expected, $msg) {
+	public function testRegister($data=NULL, $expected, $msg) {
 		$this->assertSame(
 			$expected,
-			$this->IndexesController->saveData($input),
+			$this->UserController->register($data),
+			$msg
+		);
+	}
+
+	public function testAlter($data=NULL, $hash=NULL, $expected, $msg) {
+		$this->assertSame(
+			$expected,
+			$this->UserController->alter($data, hash),
+			$msg
+		);
+	}
+
+	public function testLogout($expected, $msg) {
+		$this->assertSame(
+			$expected,
+			$this->UserController->logout(),
 			$msg
 		);
 	}

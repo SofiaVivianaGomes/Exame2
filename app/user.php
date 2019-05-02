@@ -42,7 +42,49 @@ class User extends DatabaseObject
           return false;
         }
     }
+
+    public static function check_valid($username, $date) {
+      
+        $query = self::$database->prepare("UPDATE ". static::$table_name." SET valid = :valid WHERE username = :username LIMIT 1");
+        $query->bindParam(':valid', $valid);
+        $query->bindParam(':username', $username);
+        $query->execute();
+
+        $query2 = self::$database->prepare("SELECT * FROM ".static::$table_name." WHERE username = :username AND valid = :valid");
+        $query2->bindParam(':username', $username);
+        $query2->bindParam(':valid', $valid);
+            
+        $object_array= static::find_by_sql($query2);
+
+        if (!empty($object_array)){
+          return true;
+        } else {
+          return false;
+        }
+
+  }
+
+  public static function alter_user($username, $new_password) {
     
+    $query = self::$database->prepare("UPDATE ". static::$table_name." SET password = :password WHERE username = :username LIMIT 1");
+    $query->bindParam(':password', $new_password);
+    $query->bindParam(':username', $username);
+    $query->execute();
+
+    $query2 = self::$database->prepare("SELECT * FROM ".static::$table_name." WHERE username = :username AND password = :password");
+    $query2->bindParam(':username', $username);
+    $query2->bindParam(':password', $new_password);
+        
+    $object_array= static::find_by_sql($query2);
+
+    if (!empty($object_array)){
+      return true;
+    } else {
+      return false;
+    }
+
+  }
+
     public static function find_by_username($username) 
     {
         $query = self::$database->prepare("SELECT * FROM ".static::$table_name." WHERE username = :username");

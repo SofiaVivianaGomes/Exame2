@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Controllers; //local onde está inserido
-use Vendor\View;
 use App\Indexes;
 use GuzzleHttp\Client;
 
@@ -18,48 +17,49 @@ class IndexesController
      *           getServiceData()
      *
     */
-    public function indexes($data = NULL) 
+    public function indexes($data = NULL, $hash = NULL) 
     {
-        
-        // if it has a $_POST it means we're trying to show a specific index (POST has the id)
-        if($data) {
+        if ($hash) {
 
-            $id = $data['index_id'];      
-            $index = json_decode(Indexes::find_by_id($id));   
+            // if it has a $_POST it means we're trying to show a specific index (POST has the id)
+            if($data) {
 
-            LogsController::register_log('Picked ' . $index->symbol . '.');
+                $id = $data['index_id'];      
+                $index = json_decode(Indexes::find_by_id($id));   
 
-            header('content-type: application/json');
-            //return json_encode($index); // retornar para a chamada AJAX 
-            return $index; // já está encoded         
+                LogsController::register_log('Picked ' . $index->symbol . '.');
 
-        } else {
-
-            $indexes = json_decode(Indexes::get_indexes()); 
-
-            // antes do show() verificar se a tabela indexes tem dados
-            if ($indexes) { 
-                LogsController::register_log('Accessed indexes page.');
-
-                //$this->show_indexes($indexes);
                 header('content-type: application/json');
-                //return json_encode($indexes); 
-                return $indexes; // já está encoded
-
+                //return json_encode($index); // retornar para a chamada AJAX 
+                return $index; // já está encoded         
 
             } else {
-                $data = json_decode($this->getServiceData());
 
-                $this->saveData($data); //populate the data into table indexes
+                $indexes = json_decode(Indexes::get_indexes()); 
 
-                header("Location: indexes"); //mandar de volta para a página de indexes                
-                
+                // antes do show() verificar se a tabela indexes tem dados
+                if ($indexes) { 
+                    LogsController::register_log('Accessed indexes page.');
+
+                    //$this->show_indexes($indexes);
+                    header('content-type: application/json');
+                    //return json_encode($indexes); 
+                    return $indexes; // já está encoded
+
+
+                } else {
+                    $data = json_decode($this->getServiceData());
+
+                    $this->saveData($data); //populate the data into table indexes
+
+                    header("Location: indexes"); //mandar de volta para a página de indexes                
+                    
+                }
+
             }
 
         }
-
         return false;
-
     }
 
     /*

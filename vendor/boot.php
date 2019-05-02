@@ -8,6 +8,10 @@ error_reporting(E_ALL); // para reportar todos os erros PHP
 
 ob_start(); // output buffering ligado
 
+session_start();
+
+$_SESSION['number'] = 0;
+
 // Assign file paths to PHP constants
 // __FILE__ returns the current path to this file
 // dirname() returns the path to the parent directory
@@ -27,7 +31,8 @@ require_once('database_functions.php');
 require_once('validation_functions.php');
 require_once('databaseobject.php');
 require_once('autoload.php'); // Autoload para o Guzzle
-require_once('blacklist_ips.php'); 
+require_once('ip_lists.php'); 
+require_once('csrf_token_functions.php'); 
 
 // Carrega Controllers conforme são chamados
 function my_autoload($className) {
@@ -52,8 +57,6 @@ spl_autoload_register('my_autoload');
 // Database 
 $database = db_connect();
 Vendor\DatabaseObject::set_database($database);
-
-session_start();
 
 
 ?>
