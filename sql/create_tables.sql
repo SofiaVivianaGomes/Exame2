@@ -9,9 +9,10 @@ CREATE TABLE `users`
 	`id` INT(11) NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(50) NOT NULL,
     `username` VARCHAR(50) NOT NULL,
-    `password` VARCHAR(255) NOT NULL, # BCrypt generates an implementation-dependent 448-bit hash value,
+    `password` VARCHAR(255) NOT NULL, # BCrypt generates an implementation-dependent 448-bit hash value
     `register` TIMESTAMP NOT NULL DEFAULT  '0000-00-00 00:00:00',
     `login` TIMESTAMP NOT NULL DEFAULT  '0000-00-00 00:00:00',
+    `valid`  TINYINT(1),
     
     PRIMARY KEY (`id`, `username`)
 );
@@ -42,13 +43,20 @@ CREATE TABLE `logs`
     FOREIGN KEY (`username_id`) REFERENCES `users`(`id`)
 );
 
-CREATE TABLE `auth` 
+#CREATE TABLE `auth` 
+#(	
+#	`id` INT(11) NOT NULL AUTO_INCREMENT,
+#    `username` VARCHAR(50) NOT NULL, 
+#    `hash` CHAR(60) BINARY NOT NULL,    
+#	`register_date` TIMESTAMP NOT NULL DEFAULT  '0000-00-00 00:00:00',
+#    
+#	PRIMARY KEY (`id`, `username`)
+#);
+
+CREATE TABLE `email_list` 
 (	
 	`id` INT(11) NOT NULL AUTO_INCREMENT,
     `username` VARCHAR(50) NOT NULL, 
-    `hash` CHAR(32) NOT NULL,    
-	`register_date` TIMESTAMP NOT NULL DEFAULT  '0000-00-00 00:00:00',
     
 	PRIMARY KEY (`id`, `username`)
 );
-
